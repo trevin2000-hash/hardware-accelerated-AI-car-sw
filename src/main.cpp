@@ -8,7 +8,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
 #include <vitis/ai/ultrafast.hpp>
-#include "./process_result.hpp"
+#include "../include/./process_result.hpp"
 
 int main(int argc, char *argv[])
 {

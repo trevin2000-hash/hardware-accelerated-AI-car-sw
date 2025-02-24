@@ -1,8 +1,8 @@
 #------------------------------------------------------------------------------
 # Usage:
-#   make        # Build all targets (one executable per .cpp in src/)
-#   make clean  # Remove all compiled executables
-#   make run    # Example rule to run a specific executable
+#   make        # Build the car executable
+#   make clean  # Remove compiled files
+#   make run    # Run the executable
 #------------------------------------------------------------------------------
 
 # Default to g++ if CXX is not set in the environment
@@ -10,58 +10,70 @@ CXX ?= g++
 
 # Detect whether opencv4 is installed
 CHECK_OPENCV4 := $(shell pkg-config --list-all | grep -q opencv4 && echo 1 || echo 0)
+
 ifeq ($(CHECK_OPENCV4), 1)
-  OPENCV_FLAGS := $(shell pkg-config --cflags --libs-only-L opencv4)
+  # Retrieve both include flags and library linking flags for OpenCV4
+  OPENCV_CFLAGS := $(shell pkg-config --cflags opencv4)
+  OPENCV_LIBS   := $(shell pkg-config --libs opencv4)
 else
-  OPENCV_FLAGS := $(shell pkg-config --cflags --libs-only-L opencv)
+  # Fall back to legacy OpenCV if opencv4 not found
+  OPENCV_CFLAGS := $(shell pkg-config --cflags opencv)
+  OPENCV_LIBS   := $(shell pkg-config --libs opencv)
 endif
 
 # Directories
 BIN_DIR   := bin
 SRC_DIR   := src
 INC_DIR   := include
+OBJ_DIR   := obj
 
 # Collect all .cpp files in src/
 SOURCES   := $(wildcard $(SRC_DIR)/*.cpp)
-# Convert each .cpp into an executable in bin/
-TARGETS   := $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%,$(SOURCES))
+# Convert each .cpp into a .o file in obj/
+OBJECTS   := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SOURCES))
+
+# Final executable name
+TARGET    := $(BIN_DIR)/car
 
 # Compiler flags
-CXXFLAGS  := -std=c++17 -O2 -I$(INC_DIR)
-# Libraries to link against
-LDLIBS    := -lvitis_ai_library-ultrafast \
-             -lvitis_ai_library-dpu_task \
-             -lvitis_ai_library-xnnpp \
-             -lvitis_ai_library-model_config \
-             -lvitis_ai_library-math \
-             -lvart-util \
-             -lxir \
-             -pthread \
-             -ljson-c \
-             -lglog \
-             $(OPENCV_FLAGS) \
-             -lopencv_core \
-             -lopencv_videoio \
-             -lopencv_imgproc \
-             -lopencv_imgcodecs \
-             -lopencv_highgui
+# Append OPENCV_CFLAGS so compiler can find OpenCV headers
+CXXFLAGS  := -std=c++17 -O2 -I$(INC_DIR) $(OPENCV_CFLAGS)
 
-# Default rule: build all executables
-all: $(TARGETS)
+# Additional libraries we need (Vitis AI, pthread, etc.)
+# We'll append OPENCV_LIBS so linker can find OpenCV libraries
+LDLIBS    := \
+    -lvitis_ai_library-ultrafast \
+    -lvitis_ai_library-dpu_task \
+    -lvitis_ai_library-xnnpp \
+    -lvitis_ai_library-model_config \
+    -lvitis_ai_library-math \
+    -lvart-util \
+    -lxir \
+    -pthread \
+    -ljson-c \
+    -lglog \
+    $(OPENCV_LIBS)
 
-# Build rule for each .cpp -> bin/<executable>
-$(BIN_DIR)/%: $(SRC_DIR)/%.cpp | $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $< -o $@ $(LDLIBS)
+# Default rule: Build the final executable
+all: $(TARGET)
 
-# Ensure bin/ directory exists
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
+# Link all object files into the final executable
+$(TARGET): $(OBJECTS) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LDLIBS)
 
-# Clean rule: remove all generated executables
+# Compile each .cpp into a .o file
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Ensure necessary directories exist
+$(BIN_DIR) $(OBJ_DIR):
+	mkdir -p $@
+
+# Clean rule: Remove compiled files
 clean:
-	rm -rf $(BIN_DIR)
+	rm -rf $(BIN_DIR) $(OBJ_DIR)
 
-# Example: If you want a "make run" to run bin/main
+# Run the program
 run: all
-	@echo "Running bin/main ..."
-	@./$(BIN_DIR)/main
+	@echo "Running $(TARGET) ..."
+	@./$(TARGET)

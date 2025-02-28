@@ -1,3 +1,6 @@
+#ignore the .vscode file
+.vscode
+
 #ignore binary executable files
 bin/*
 

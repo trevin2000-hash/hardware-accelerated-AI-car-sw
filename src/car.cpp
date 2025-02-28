@@ -10,6 +10,7 @@
 /// @param void: nothing
 Car::Car(void)
 {
+
     // set up video capture device
     int camera_index = 0;           // index of camera usb device
     int width = 640;                // pixel width of the camera feed
@@ -106,6 +107,7 @@ void Car::lane_tracking_loop()
         last_time = current_time;
 
         this->delta_x = this->target_x - (this->cap.get(cv::CAP_PROP_FRAME_WIDTH) / 2);
+
         // Display the FPS on the processed image
         cv::putText(process_frame,
                     "FPS: " + std::to_string(fps) + " delta x: " + std::to_string(this->delta_x),

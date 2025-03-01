@@ -17,6 +17,7 @@ public:
     Car();
     Car(int camera_index, int width, int height, std::string fourcc, std::string model);
     void lane_tracking_loop();
+    int compute_servo_value(int delta_x);
 };
 
 #endif

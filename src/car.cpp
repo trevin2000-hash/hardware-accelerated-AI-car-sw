@@ -108,6 +108,10 @@ void Car::lane_tracking_loop()
 
         this->delta_x = this->target_x - (this->cap.get(cv::CAP_PROP_FRAME_WIDTH) / 2);
 
+        // Compute servo value using proportional controller
+        int servo_value = compute_servo_value(this->delta_x);
+        std::cout << "Servo Value: " << servo_value << std::endl;
+
         // Display the FPS on the processed image
         cv::putText(process_frame,
                     "FPS: " + std::to_string(fps) + " delta x: " + std::to_string(this->delta_x),
@@ -130,4 +134,21 @@ void Car::lane_tracking_loop()
     // Release the camera and close OpenCV windows
     cap.release();
     cv::destroyAllWindows();
+}
+
+int compute_servo_value(int delta_x)
+{
+    // Proportional gain; adjust this value based on your system's sensitivity.
+    const float Kp = 2.0;
+    // Calculate the offset from 1500 using the error (delta_x)
+    int offset = static_cast<int>(Kp * delta_x);
+    int servo_value = 1500 + offset;
+
+    // Clamp the servo value to be within the valid range.
+    if (servo_value < 1100)
+        servo_value = 1100;
+    else if (servo_value > 1900)
+        servo_value = 1900;
+
+    return servo_value;
 }

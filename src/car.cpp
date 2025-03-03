@@ -4,12 +4,17 @@
 #include <opencv2/videoio.hpp>
 #include <vitis/ai/ultrafast.hpp> //for ultrafast ai model provide by AI vitis model zoo
 #include "./process_result.hpp"   //for process_result()
+#include "udp_handler.hpp"
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief default constructor for car class.
 /// Uses generic values to set up camera feed pipeline and lane detection AI model
-/// @param void: nothing
-Car::Car(void)
+/// @param ip the ip address of the esp8266
+/// @param port the socket of the esp8266
+Car::Car(std::string ip, int port)
 {
+
+    this->esp = udp_handler(ip, port);
 
     // set up video capture device
     int camera_index = 0;           // index of camera usb device
@@ -33,20 +38,25 @@ Car::Car(void)
     this->cap.set(cv::CAP_PROP_FOURCC, fourcc);
 
     // create the ultra-Fast Lane detection model
-    this->lanedection_ai = vitis::ai::UltraFast::create("ultrafast_pt");
+    this->lanedection_ai = vitis::ai::UltraFast::create("ultrafast_pt_acc");
 
     this->target_x = 0;
     this->delta_x = 0;
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief constructor for car class. It setup the camera feed pipeline and lane detection AI model
 /// @param camera_index : index of camera usb device
 /// @param width    : pixel width of the camera feed
 /// @param height : pixel height of the camera feed
 /// @param fourcc : this is you video codec options (ie: YUYV, MJPG)
 /// @param model  : for AI Vitis 2.5: use "ultrafast_pt" or "ultrafast_pt_acc" for model name
-Car::Car(int camera_index, int width, int height, std::string fourccStr, std::string model)
+/// @param ip the ip address of the esp8266
+/// @param port the socket of the esp8266
+Car::Car(int camera_index, int width, int height, std::string fourccStr, std::string model, std::string ip, int port)
 {
+    this->esp = udp_handler(ip, port);
+
     // set up video capture device
     int fourcc = cv::VideoWriter::fourcc(
         fourccStr[0],
@@ -71,6 +81,27 @@ Car::Car(int camera_index, int width, int height, std::string fourccStr, std::st
     this->delta_x = 0;
 };
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// @brief This use a proportional controller to calculate the need servo value to stay in the lane.
+/// @param delta_x The number of horizontal pixel away the center of camera image is from the center of lane
+/// @return The servo value that is need to stay inside the lane
+int Car::compute_servo_value(int delta_x)
+{
+    // Proportional gain; adjust this value based on your system's sensitivity.
+    const float Kp = 5.0;
+    // Calculate the offset from 1500 using the error (delta_x)
+    int offset = Kp * delta_x;
+    int servo_value = 1500 + offset;
+
+    if (servo_value < 0) // if negative  set it to zero
+    {
+        servo_value = 0;
+    }
+
+    return servo_value;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// @brief This function loops through: grabs a frame from the camera, send it to AI, then process result returned from AI.
 /// the while loop does stop until you 'q'.
 void Car::lane_tracking_loop()
@@ -106,11 +137,13 @@ void Car::lane_tracking_loop()
         double fps = 1000.0 / elapsed_ms; // Convert ms to fps
         last_time = current_time;
 
-        this->delta_x = this->target_x - (this->cap.get(cv::CAP_PROP_FRAME_WIDTH) / 2);
-
         // Compute servo value using proportional controller
+        this->delta_x = this->target_x - (this->cap.get(cv::CAP_PROP_FRAME_WIDTH) / 2);
         int servo_value = compute_servo_value(this->delta_x);
         std::cout << "Servo Value: " << servo_value << std::endl;
+
+        // send servo value to motor controller
+        esp.send(static_cast<uint16_t>(100), static_cast<uint16_t>(100), static_cast<uint16_t>(servo_value));
 
         // Display the FPS on the processed image
         cv::putText(process_frame,
@@ -132,23 +165,7 @@ void Car::lane_tracking_loop()
     }
 
     // Release the camera and close OpenCV windows
-    cap.release();
+    this->cap.release();
+    this->esp.close_socket();
     cv::destroyAllWindows();
-}
-
-int compute_servo_value(int delta_x)
-{
-    // Proportional gain; adjust this value based on your system's sensitivity.
-    const float Kp = 2.0;
-    // Calculate the offset from 1500 using the error (delta_x)
-    int offset = static_cast<int>(Kp * delta_x);
-    int servo_value = 1500 + offset;
-
-    // Clamp the servo value to be within the valid range.
-    if (servo_value < 1100)
-        servo_value = 1100;
-    else if (servo_value > 1900)
-        servo_value = 1900;
-
-    return servo_value;
 }

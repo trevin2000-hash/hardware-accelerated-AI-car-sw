@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 // Configuration constants
-const char *ESP_IP_ADDRESS = "10.0.0.24"; // Replace with your ESP8266's IP address
+const char *ESP_IP_ADDRESS = "10.0.0.20"; // Replace with your ESP8266's IP address
 const int ESP_UDP_PORT = 3333;
 
 // Function to send command to ESP8266

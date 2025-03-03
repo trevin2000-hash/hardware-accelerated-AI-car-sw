@@ -4,7 +4,9 @@
 int main()
 {
 
-    Car vehicle;
+    // Car vehicle("10.0.0.20", 3333);
+
+    Car vehicle(0, 640, 480, "YUYV", "ultrafast_pt_acc", "10.0.0.20", 3333);
 
     vehicle.lane_tracking_loop();
 

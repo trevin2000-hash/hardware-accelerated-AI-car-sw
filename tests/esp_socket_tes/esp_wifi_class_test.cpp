@@ -5,7 +5,7 @@
 
 int main()
 {
-    std::string ip = "10.0.0.20";
+    std::string ip = "192.168.100.2";
     udp_handler esp = udp_handler(ip, 3333);
     int rightDuty, leftDuty, servoUs;
 

@@ -3,6 +3,7 @@
 #include <opencv2/core.hpp> // need opencv for video capuring
 #include <opencv2/videoio.hpp>
 #include <vitis/ai/ultrafast.hpp> //for ultrafast ai model provide by AI vitis model zoo
+#include <thread>                 //for imshow()
 #include "./process_result.hpp"   //for process_result()
 #include "udp_handler.hpp"
 
@@ -88,7 +89,7 @@ Car::Car(int camera_index, int width, int height, std::string fourccStr, std::st
 int Car::compute_servo_value(int delta_x)
 {
     // Proportional gain; adjust this value based on your system's sensitivity.
-    const float Kp = 5.0;
+    const float Kp = 6;
     // Calculate the offset from 1500 using the error (delta_x)
     int offset = Kp * delta_x;
     int servo_value = 1500 + offset;

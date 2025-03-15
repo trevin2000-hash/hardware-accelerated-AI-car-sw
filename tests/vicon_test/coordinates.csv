@@ -1,0 +1,90 @@
+# parser will have to be set up to ignore lines starting with '#'
+# starting from south-east turn, going clockwise
+# south-east turn:
+1465,372
+1049,361
+901,373
+804,404
+711,448
+624,498
+540,569
+474,658
+428,718
+408,786
+383,875
+370,968
+370,1068
+378,1476
+# end of south-east turn
+
+# beginning of south-west turn
+364,4113
+352,4526
+355,4618
+364,4680
+377,4739
+399,4793
+426,4841
+466,4906
+513,4968
+538,5013
+586,5063
+661,5118
+724,5143
+800,5174
+886,5188
+963,5204
+1052,5211
+1472,5207
+#end of south-west turn
+
+#beginning of sharp north-west turn
+3511,5203
+3990,5253
+4126,5268
+4192,5218
+4227,5177
+4239,5128
+4244,5029
+4185,4604
+#end of sharp north-west turn
+
+#beginning of sharp north-east turn
+4187,1057
+4242,578
+4246,491
+4222,413
+4188,376
+4160,358
+4126,341
+4086,328
+4022,331
+3585,367
+#end of sharp north-east turn
+
+
+
+
+#beginning of north-west turn
+4615,5219
+5039,5218
+5120,5207
+5199,5200
+5261,5189
+5311,5168
+5360,5149
+5421,5110
+5476,5063
+5517,5037
+5558,5008
+5603,4957
+5631,4899
+5662,4841
+5679,4789
+5694,4721
+5700,4657
+5707,4606
+5714,4525
+5715,4095
+#end of north-west turn
+

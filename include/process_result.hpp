@@ -65,6 +65,7 @@ int find_midpoint(std::vector<std::pair<float, float>> current_lane_line, std::v
 
     target_x = sum / num_valid_points;
 
+    cout << "num_valid_points = " << num_valid_points << endl;
     cout << "tagert_x = " << target_x << endl;
 
     cv::Point point(target_x, 300);

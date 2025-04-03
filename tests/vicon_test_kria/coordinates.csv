@@ -1,0 +1,15 @@
+# parser will have to be set up to ingnore lines starting with '#'
+# starting from south-east turn, going clockwise
+# south-east turn:
+1170,-115
+662,-100
+514,-104
+382,-81
+213,-4
+74,110
+2,197
+-67,374
+-83,507
+-87,672
+-71,949
+# end of south-east turn

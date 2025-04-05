@@ -56,7 +56,7 @@ void turning_loop()
         double distance = sqrt(dx * dx + dy * dy);
 
         // Check if close enough to target
-        if (distance < 20)
+        if (distance < 50)
         { // threshold for waypoint reach (tune as needed)
             waypoint_index++;
             continue;

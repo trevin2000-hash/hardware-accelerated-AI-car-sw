@@ -1,9 +1,10 @@
 #include <iostream>
 #include "waypoint_loader.hpp"
 #include "ViconPacketReader.h"
-#include "udp_handler.hpp"        // for udp_handler class
+#include "udp_handler.hpp" // for udp_handler class
 #include <cmath>
 #include <string>
+#include "pwm_servo_driver.hpp"
 
 int compute_servo_value(int delta_x)
 {
@@ -11,14 +12,14 @@ int compute_servo_value(int delta_x)
     const float Kp = 20;
     // Calculate the offset from 1500 using the error (delta_x)
     int offset = Kp * delta_x;
-    int servo_value = 1500 - offset;
+    int servo_value = 1650 - offset;
 
     std::cout << "Offset: " << offset << std::endl;
 
     // keep servo value between 1000-2000 to prevent damage to motor
-    if (servo_value < 1000)
+    if (servo_value < 1200)
     {
-        servo_value = 1000;
+        servo_value = 1200;
     }
     else if (servo_value > 2000)
     {
@@ -30,15 +31,20 @@ int compute_servo_value(int delta_x)
 
 void turning_loop()
 {
+    motor_control controller;
+
+    int enable = 1;
+    controller.enableMotors(enable == 1);
+
     auto waypoints = load_waypoints("coordinates.csv");
 
     ViconPacketReader vicon_reader;
     size_t waypoint_index = 0;
 
-    int port = 3333;
-    std::string ip = "192.168.100.2";
+    // int port = 3333;
+    // std::string ip = "192.168.100.2";
 
-    udp_handler esp = udp_handler(ip, port);
+    // udp_handler esp = udp_handler(ip, port);
 
     while (waypoint_index < waypoints.size())
     {
@@ -75,21 +81,25 @@ void turning_loop()
         // Compute servo value based on bearing error
         int servo_value = compute_servo_value(static_cast<int>(bearing_error));
 
-        esp.send(static_cast<uint16_t>(100), static_cast<uint16_t>(100), static_cast<uint16_t>(servo_value));
+        // esp.send(static_cast<uint16_t>(100), static_cast<uint16_t>(100), static_cast<uint16_t>(servo_value));
+        controller.setBothMotorDuty(0, 0);
+        controller.setServoPeriod(servo_value);
 
         std::cout << "Navigating to waypoint " << waypoint_index + 1
                   << "\nServo: " << servo_value
-                  << "\nBearing error: " << bearing_error 
-                  << "\nDistance: " << distance << std::endl;
+                  << "\nBearing error: " << bearing_error
+                  << "\nDistance: " << distance
+                  << "\nXpos: " << current_x
+                  << "\nYpos: " << current_y << std::endl;
 
         // Small delay or synchronization here (e.g., std::this_thread::sleep_for)
-        //std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         // Exit turning loop if lane detected again
-        //cap >> frame;
-        //auto result = lanedection_ai->run(frame);
-        //process_result(frame, cap.get(cv::CAP_PROP_FRAME_WIDTH), result, false, this->target_x);
-        //if (this->target_x != -1)
+        // cap >> frame;
+        // auto result = lanedection_ai->run(frame);
+        // process_result(frame, cap.get(cv::CAP_PROP_FRAME_WIDTH), result, false, this->target_x);
+        // if (this->target_x != -1)
         //{
         //    std::cout << "Lane detected again, exiting turning loop.\n";
         //    return;
@@ -101,13 +111,12 @@ void turning_loop()
 
 int main()
 {
-
     // Car vehicle("10.0.0.20", 3333);
 
-    //Car vehicle(0, 640, 480, "YUYV", "ultrafast_pt_acc", "192.168.100.2", 3333);
+    // Car vehicle(0, 640, 480, "YUYV", "ultrafast_pt_acc", "192.168.100.2", 3333);
 
-    //vehicle.lane_tracking_loop();
+    // vehicle.lane_tracking_loop();
     turning_loop();
- 
+
     return 0;
 }
